@@ -25,7 +25,11 @@ def currentTime():
 
 def determinePinging(targetIP):
     global pinging
-    if str(check_output("ping -n 1 "+targetIP)).count('TTL'):
+    try:
+        samplestatus=bool(str(check_output("ping -n 1 "+targetIP)).count('TTL'))
+    except Exception:
+        samplestatus=0
+    if samplestatus:
         for knownIP in trackedIPs:
             if knownIP['Address'] == targetIP:
                 knownIP['LastPinged'] = currentTime()
@@ -59,8 +63,11 @@ def statusUpdate(newStatus):
     global status
     if newStatus != status[0]:
         system("title = "+targetMachine+"  "+username+"   "+newStatus)
-        system("(((echo "+username+" at "+targetMachine+") & echo old status [since "+status[1]+"] "+status[0]+" ) & echo new status [since "+currentTime()+"] "+newStatus+") | msg "+me)
+        if status[0] != 'firstrun':
+            system("(((echo "+username+" at "+targetMachine+") & echo old status [since "+status[1]+"] "+status[0]+" ) & echo new status [since "+currentTime()+"] "+newStatus+") | msg "+me)
         status=(newStatus, currentTime())
+    else:
+        pass
 
 
 
@@ -69,7 +76,7 @@ def statusUpdate(newStatus):
 
 while True:
     if not firstrun:
-        print('previously resolved IPs below. IPs are only ping-tested if they are currently resolved by nameserver.')
+        print('previously resolved IPs below. IPs are only ping-tested when they are being resolved by the name server.')
         for item in trackedIPs:
             print(item['Address']+'\n    last ping: '+item['LastPinged']+'\n    last dns:  '+item['LastResolved'])
         print('\n\n\nCURRENT RESULTS:')
